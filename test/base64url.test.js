@@ -79,3 +79,36 @@ test('example from readme', function(t) {
   t.same(resultDecoded, original, 'these should match too');
   t.end();
 });
+
+test('pad-string pads to multiple of 4', function (t) {
+  t.same(base64url.toBase64('A'), 'A===', 'len % 4 == 1 needs 3 pads');
+  t.same(base64url.toBase64('AA'), 'AA==', 'len % 4 == 2 needs 2 pads');
+  t.same(base64url.toBase64('AAA'), 'AAA=', 'len % 4 == 3 needs 1 pad');
+  t.same(base64url.toBase64('AAAA'), 'AAAA', 'len % 4 == 0 needs no pads');
+  t.end();
+});
+
+test('round-trip for byte lengths mod 3 in {0,1,2}', function (t) {
+  ['foo', 'fo', 'f', ''].forEach(function (s) {
+    const encoded = base64url.encode(s);
+    t.same(encoded.indexOf('='), -1, 'no padding left in base64url for ' + JSON.stringify(s));
+    t.same(base64url.decode(encoded), s, 'decode(encode(x)) round-trips for ' + JSON.stringify(s));
+  });
+  t.end();
+});
+
+test('binary round-trip via toBuffer(encode(buffer))', function (t) {
+  const encoded = base64url.encode(testBuffer);
+  t.same(encoded.indexOf('+'), -1, 'no plus signs');
+  t.same(encoded.indexOf('/'), -1, 'no slashes');
+  t.same(encoded.indexOf('='), -1, 'no equal signs');
+  t.same(base64url.toBuffer(encoded), testBuffer, 'toBuffer(encode(buf)) round-trips');
+  t.end();
+});
+
+test('encode rejects non-string/non-Buffer input', function (t) {
+  [1000, { a: 1 }, null, undefined].forEach(function (bad) {
+    t.throws(function () { base64url.encode(bad); }, 'should throw for ' + JSON.stringify(bad));
+  });
+  t.end();
+});

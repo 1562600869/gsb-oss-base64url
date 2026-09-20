@@ -90,6 +90,24 @@ Convert a base64url encoded string to a Buffer containing the decoded bytes.
 <Buffer 73 70 69 72 69 74 75 61 6c 69 7a 65 64>
 ```
 
+# 中文说明
+
+本库实现 [RFC 4648](https://tools.ietf.org/html/rfc4648) 规定的 base64url 编解码：字母表使用 `A-Za-z0-9-_`（替换标准 base64 的 `+`/`/`），并省略填充字符 `=`。零运行时依赖，适用于 Node.js（CommonJS）与 TypeScript。
+
+## API 一览
+
+- `base64url(input, encoding = "utf8")` / `base64url.encode(input, encoding = "utf8")`：默认调用，等价于 `encode`。`input` 必须是 `string` 或 `Buffer`；字符串按 `encoding` 编码为字节后再转 base64url，`Buffer` 直接按二进制编码。传入其他类型（如 `number`、`object`、`null`）会抛出 `TypeError`。
+- `base64url.decode(input, encoding = "utf8")`：将 base64url 字符串解码为字符串；`input` 也可以是 `Buffer`（内部先 `.toString()`）。
+- `base64url.toBase64(input)`：把 base64url 还原为标准 base64——先按 `4 - (len % 4)` 规则补齐 `=`，再将 `-`→`+`、`_`→`/`。
+- `base64url.fromBase64(input)`：把标准 base64 转为 base64url——`+`→`-`、`/`→`_`，并剥除所有 `=`。
+- `base64url.toBuffer(input)`：先经 `toBase64` 还原字母表与填充，再按 base64 解码为 `Buffer`，字节内容与 `decode` 一致。
+
+在合法输入上，`decode(encode(x))` 与 `toBuffer(encode(buf))` 均可无损 round-trip（含 JPEG 等二进制数据）。
+
+## 测试
+
+运行 `npm test`（依次执行 clean、tsc 编译、tap 规格测试）。最近一次全绿结果：**12 个测试组、共 33 条断言全部通过**（`test/base64url.test.js`，含 JPEG 二进制 round-trip、mod 4 填充边界、非法输入校验与本文档示例）。
+
 # Alternatives
 
 - [base64-url](https://github.com/joaquimserafim/base64-url)
