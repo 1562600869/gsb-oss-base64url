@@ -79,3 +79,33 @@ test('example from readme', function(t) {
   t.same(resultDecoded, original, 'these should match too');
   t.end();
 });
+
+test('boundary lengths (byte length mod 3)', function (t) {
+  const cases = [
+    [Buffer.from(''), ''],
+    [Buffer.from('f'), 'Zg'],
+    [Buffer.from('fo'), 'Zm8'],
+    [Buffer.from('foo'), 'Zm9v'],
+    [Buffer.from('foob'), 'Zm9vYg'],
+    [Buffer.from('fooba'), 'Zm9vYmE'],
+    [Buffer.from('foobar'), 'Zm9vYmFy']
+  ];
+  cases.forEach(function (entry) {
+    const input = entry[0];
+    const expected = entry[1];
+    const encoded = base64url(input);
+    t.same(encoded, expected, 'encodes ' + input.length + ' byte(s) without padding');
+    t.same(base64url.toBuffer(encoded), input, 'round-trips ' + input.length + ' byte(s) via toBuffer');
+    t.same(base64url.decode(encoded), input.toString(), 'round-trips ' + input.length + ' byte(s) via decode');
+  });
+  t.end();
+});
+
+test('invalid encode inputs throw a diagnostic error', function (t) {
+  [1000, null, undefined, {}, true, []].forEach(function (badInput) {
+  t.throws(function () {
+    base64url.encode(badInput);
+  }, /string or Buffer/, 'rejects ' + String(badInput));
+  });
+  t.end();
+});

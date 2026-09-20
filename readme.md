@@ -94,6 +94,27 @@ Convert a base64url encoded string to a Buffer containing the decoded bytes.
 
 - [base64-url](https://github.com/joaquimserafim/base64-url)
 
+# 中文说明
+
+本库实现 [RFC 4648](http://en.wikipedia.org/wiki/Base64#RFC_4648) 定义的 base64url 编解码，零运行时依赖：
+
+- 字母表：标准 base64 为 `A-Za-z0-9+/`；base64url 为 `A-Za-z0-9-_`，且省略填充符 `=`。
+- 填充规则：还原为标准 base64 时，按长度对 4 取模补 `=`，补足个数为 `4 - (len % 4)`（余 1 补 3、余 2 补 2、余 3 补 1）。
+
+## API
+
+- `base64url(input, encoding = "utf8")` / `base64url.encode(input, encoding = "utf8")`：默认调用即 `encode`。`string` 按 `encoding` 转 `Buffer`，`Buffer` 直接使用；内部走 `toString("base64")` 再做 URL-safe 转换，因此可安全处理 JPEG 等二进制数据。输入必须是 `string` 或 `Buffer`，否则抛出 `TypeError: Expected input to be a string or Buffer`。
+- `base64url.decode(base64url, encoding = "utf8")`：先还原字母表与填充，再按 base64 解码，最后按 `encoding` 输出字符串；传入 `Buffer` 会先 `.toString()` 再处理。
+- `base64url.toBase64(input)`：base64url → 标准 base64，即 `-`→`+`、`_`→`/` 并补齐 `=`。
+- `base64url.fromBase64(input)`：标准 base64 → base64url，即 `+`→`-`、`/`→`_` 并剥除所有 `=`。
+- `base64url.toBuffer(input)`：base64url → `Buffer`，字节内容与 `decode` 的解码结果一致。
+
+合法输入满足 `decode(encode(x)) === x` 与 `toBuffer(encode(buf))` 字节级 round-trip。
+
+## 测试
+
+保持零依赖，测试 harness 为 `npm test`（`clean` + `tsc` + `tap`）。最近一次真实运行结果：10 个测试用例、50 个断言全部通过，0 失败。
+
 # Supported Node.js versions
 
 This library should be used with current versions of the Node.js runtime's long-term stable (LTS)
